@@ -53,7 +53,7 @@ TestStatus TransferStatus1 = FAILED;
 /*********************************************************************
  * @fn      GPIO_Toggle_INIT
  *
- * @brief   Initializes GPIOA.0
+ * @brief   Initializes GPIOD.0
  *
  * @return  none
  */
@@ -97,7 +97,7 @@ TestStatus Buffercmp(uint8_t *Buf1, uint8_t *Buf2, uint16_t BufLength)
 /*********************************************************************
  * @fn      USARTx_CFG
  *
- * @brief   Initializes the USART2 & USART3 peripheral.
+ * @brief   Initializes the USART1 peripheral.
  *
  * @return  none
  */
@@ -124,7 +124,6 @@ void USARTx_CFG(void)
     USART_InitStructure.USART_Parity = USART_Parity_No;
     USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
     USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
-
     USART_Init(USART1, &USART_InitStructure);
     USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
 
@@ -136,6 +135,7 @@ void USARTx_CFG(void)
 
     USART_Cmd(USART1, ENABLE);
 }
+
 /*********************************************************************
  * @fn      main
  *
@@ -193,7 +193,7 @@ void USART1_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 /*********************************************************************
  * @fn      USART1_IRQHandler
  *
- * @brief   This function handles USART3 global interrupt request.
+ * @brief   This function handles USART1 global interrupt request.
  *
  * @return  none
  */

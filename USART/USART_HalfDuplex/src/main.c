@@ -59,7 +59,7 @@ TestStatus TransferStatus1 = FAILED;
 /*********************************************************************
  * @fn      GPIO_Toggle_INIT
  *
- * @brief   Initializes GPIOA.0
+ * @brief   Initializes GPIOD.0
  *
  * @return  none
  */
@@ -125,16 +125,16 @@ void USARTx_CFG(void)
     USART_InitStructure.USART_Parity = USART_Parity_No;
     USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
     USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
-
     USART_Init(USART1, &USART_InitStructure);
     USART_Cmd(USART1, ENABLE);
 
     USART_HalfDuplexCmd(USART1, ENABLE);
 }
+
 /*********************************************************************
- * @fn      DMA_INIT
+ * @fn      main
  *
- * @brief   Configures the DMA for USART1.
+ * @brief   Main program.
  *
  * @return  none
  */

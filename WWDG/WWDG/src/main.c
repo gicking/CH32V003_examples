@@ -81,6 +81,7 @@ void WWDG_Feed(void)
 {
     WWDG_SetCounter(WWDG_CNT);
 }
+
 /*********************************************************************
  * @fn      main
  *
@@ -91,6 +92,7 @@ void WWDG_Feed(void)
 int main(void)
 {
     u8 wwdg_tr, wwdg_wr;
+    u16 loop = 0;
 
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
     Delay_Init();
@@ -102,14 +104,21 @@ int main(void)
     wwdg_wr = WWDG->CFGR & 0x7F;
     while(1)
     {
+        loop++;
+        
         Delay_Ms(10);
 
-        printf("**********\r\n");
         wwdg_tr = WWDG->CTLR & 0x7F;
         if(wwdg_tr < wwdg_wr)
         {
             WWDG_Feed();
+            printf("WWDG feed\r\n");
         }
-        printf("##########\r\n");
+
+        // optionally stop WWDG feed -> trigger reset
+        #if (1)
+            if (loop > 200)
+                while(1);
+        #endif
     }
 }

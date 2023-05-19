@@ -43,7 +43,7 @@ void EXTI0_INT_INIT(void)
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
     GPIO_Init(GPIOD, &GPIO_InitStructure);
 
-    /* GPIOA ----> EXTI_Line0 */
+    /* GPIOD0 ----> EXTI_Line0 */
     GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource0);
     EXTI_InitStructure.EXTI_Line = EXTI_Line0;
     EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;

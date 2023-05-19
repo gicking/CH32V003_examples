@@ -57,7 +57,7 @@ TestStatus TransferStatus2 = FAILED;
 /*********************************************************************
  * @fn      GPIO_Toggle_INIT
  *
- * @brief   Initializes GPIOA.0
+ * @brief   Initializes GPIOD.0
  *
  * @return  none
  */
@@ -115,9 +115,9 @@ void USART1_ReCFG(void)
 
     /* USART1  Ck-->D.4   TX-->D.5   RX-->D.6 */
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
-     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-     GPIO_Init(GPIOD, &GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+    GPIO_Init(GPIOD, &GPIO_InitStructure);
 
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
     GPIO_Init(GPIOD, &GPIO_InitStructure);
@@ -139,7 +139,6 @@ void USART1_ReCFG(void)
     USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
     USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
     USART_Init(USART1, &USART_InitStructure);
-
     USART_Cmd(USART1, ENABLE);
 }
 
@@ -175,7 +174,6 @@ void SPI1_INIT(void)
     SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
     SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
     SPI_Init(SPI1, &SPI_InitStructure);
-
     SPI_Cmd(SPI1, ENABLE);
 }
 

@@ -12,20 +12,20 @@
 
 /*
  *@Note
- Independent watchdog routine:
-This routine demonstrates the pull-down input of the PC1 pin. When the input is high,
- it will feed the dog. If you don't feed the dog,Then trigger independent watchdog reset after 4s.
+ Independent timeout watchdog (IWDG) routine:
+ This routine demonstrates the pull-down input of the PC1 pin. When the input is high,
+ it will feed the IWDG watchdog. If you don't feed the dog, IWDG triggers a reset after 4s.
 
 */
 
 #include "debug.h"
 
-#define KEY0 GPIO_ReadInputDataBit( GPIOC, GPIO_Pin_1)  //PC1
+#define KEY0 GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_1)  //PC1
 
 /*********************************************************************
  * @fn      KEY_Init
  *
- * @brief   Initializes KEY GPIO.
+ * @brief   Initializes KEY GPIOC.1
  *
  * @return  none
  */
@@ -86,6 +86,7 @@ void IWDG_Feed_Init(u16 prer, u16 rlr)
     IWDG_ReloadCounter();
     IWDG_Enable();
 }
+
 /*********************************************************************
  * @fn      main
  *
@@ -111,7 +112,11 @@ int main(void)
         {
             printf("Feed dog\r\n");
             IWDG_ReloadCounter();   //Feed dog
-            Delay_Ms(10);
         }
+        else
+        {
+            printf("Don't feed dog\r\n");
+        }
+        Delay_Ms(200);
     }
 }

@@ -26,7 +26,7 @@
 /*********************************************************************
  * @fn      GPIO_Toggle_INIT
  *
- * @brief   Initializes GPIOA.0
+ * @brief   Initializes GPIOD.0 as push-pull output
  *
  * @return  none
  */
@@ -50,7 +50,7 @@ void GPIO_Toggle_INIT(void)
  */
 int main(void)
 {
-    u8 i = 0;
+    //u8 i = 0;
 
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
     Delay_Init();
@@ -63,6 +63,7 @@ int main(void)
     while(1)
     {
         Delay_Ms(250);
-        GPIO_WriteBit(GPIOD, GPIO_Pin_0, (i == 0) ? (i = Bit_SET) : (i = Bit_RESET));
+        //GPIO_WriteBit(GPIOD, GPIO_Pin_0, (i == 0) ? (i = Bit_SET) : (i = Bit_RESET));
+        GPIO_WriteBit(GPIOD, GPIO_Pin_0, !GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_0));
     }
 }

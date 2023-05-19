@@ -34,7 +34,7 @@ vu8 val;
 /*********************************************************************
  * @fn      USARTx_CFG
  *
- * @brief   Initializes the USART2 & USART3 peripheral.
+ * @brief   Initializes the USART1 peripheral.
  *
  * @return  none
  */
@@ -60,7 +60,6 @@ void USARTx_CFG(void)
     USART_InitStructure.USART_Parity = USART_Parity_No;
     USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
     USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
-
     USART_Init(USART1, &USART_InitStructure);
     USART_Cmd(USART1, ENABLE);
 }
@@ -89,7 +88,8 @@ int main(void)
             /* waiting for receiving finish */
         }
         val = (USART_ReceiveData(USART1));
-        USART_SendData(USART1, ~val);
+        USART_SendData(USART1, ~val);       // invert echo
+        //USART_SendData(USART1, val+1);      // echo+1
         while(USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
         {
             /* waiting for sending finish */

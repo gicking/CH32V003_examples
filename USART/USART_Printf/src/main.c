@@ -47,6 +47,6 @@ int main(void)
     while(1)
     {
         Delay_Ms(500);
-        printf("printf loop %ld\r\n", i++);
+        printf("loop %ld\r\n", i++);
     }
 }
