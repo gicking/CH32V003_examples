@@ -1,0 +1,5 @@
+# VisualStudio Code settings
+.vscode
+
+# PlatformIO settings, build results etc.
+.pio
