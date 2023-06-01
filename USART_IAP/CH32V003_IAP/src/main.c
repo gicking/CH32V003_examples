@@ -17,7 +17,7 @@ Support serial port for FLASH burning
 1. Use the IAP download tool to realize the download PA0 floating (default pull-up input)
 2. After downloading the APP, connect PC0 to ground (low level input), and press the
 reset button to run the APP program.
-3. use WCH-LinkUtility.exe download to BOOT(adr-0x1FFFF000)
+3. use WCH-LinkUtility.exe or https://github.com/ch32-rs/wlink to download to BOOT(addr=0x1FFFF000)
 
 */
 
@@ -48,21 +48,37 @@ void IAP_2_APP(void)
  */
 int main(void)
 {
-    RCC->APB2PCENR |= RCC_APB2Periph_GPIOD| RCC_APB2Periph_USART1|RCC_APB2Periph_GPIOC;/* Enable GPIOD��USART1�� GPIOC  clock */
-      USART1_CFG(460800);
+    u32 i=0;
+    
+    // Enable GPIOD, USART1 and GPIOC clock
+    RCC->APB2PCENR |= RCC_APB2Periph_GPIOD| RCC_APB2Periph_USART1|RCC_APB2Periph_GPIOC;
+    
+    // init required peripherals
+    USART1_CFG(460800);    
+    GPIO_CFG();
 
-    if(PC0_Check() == 0)
+
+    // check bootmode pin only after reset
+    if(Bootmode_Check() == 0)
     {
-            IAP_2_APP();
-            while(1);
+        IAP_2_APP();
+        while(1);
     }
 
+    // enter IAP bootloader
     while(1)
     {
+        // indicate IAP mode via fast blinking PD0 (connect to LED)
+        if (i++ == 1000000L)
+        {
+            i=0;
+            GPIOD->OUTDR^=0x1;
+        }
+
+        // handle UART commands
         if(USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == RESET)
         {
             UART_Rx_Deal();
-
         }
     }
 }

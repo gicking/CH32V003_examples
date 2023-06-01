@@ -47,9 +47,8 @@ typedef void (*iapfun)(void);
 
 extern u8 EP2_Rx_Buffer[USBD_DATA_SIZE];
 
-u8 RecData_Deal(void);
-void GPIO_Cfg_init(void);
-u8 PC0_Check(void);
+void GPIO_CFG(void);
+u8 Bootmode_Check(void);
 void USART1_CFG(u32 baudrate);
 void UART_Rx_Deal(void);
 

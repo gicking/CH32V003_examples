@@ -39,11 +39,11 @@ u8 EP2_Rx_Buffer[USBD_DATA_SIZE];
 void USART1_CFG(u32 baudrate)
 {
 
-    GPIOD->CFGLR=0X48B44444;/* Set GPIOD Mode,Speed,USART_Parity */
+    GPIOD->CFGLR=0X48B44444;/* Set GPIOD Mode,Speed (PD6=Rx, PD5=Tx)*/
     GPIOD->BCR = (((uint32_t)0x01) << 6);
     USART1->CTLR2 |= USART_StopBits_1;
 
-    USART1->CTLR1=0X200C; /* Set USART mode,WordLength,GPIO_Pin */
+    USART1->CTLR1=0X200C; /* Set USART mode,WordLength,Parity,GPIO_Pin */
 
     USART1->CTLR3 |= USART_HardwareFlowControl_None;
 
@@ -139,81 +139,40 @@ u8 RecData_Deal(void)
 }
 
 /*********************************************************************
- * @fn      GPIO_Cfg_init
+ * @fn      GPIO_CFG
  *
- * @brief   GPIOC init
+ * @brief   init bootmode pin GPIOC.0
  *
  * @return  none
  */
-void GPIO_Cfg_init(void)
+void GPIO_CFG(void)
 {
+    // set GPIOC.0 as input with pull-up
+    GPIOC->CFGLR &= ~0xF;
+    GPIOC->CFGLR |=  0x8;
 
-
-   GPIOC->CFGLR&=~0x4;
-   GPIOC->CFGLR=0x8;
-   GPIOC->BSHR = ((uint32_t)0x01);
-
-
+    // set GPIOD.0 as output, push-pull (connect to LED)
+    GPIOD->CFGLR &= ~0XF;
+    GPIOD->CFGLR |=  0X2;
 }
 
 /*********************************************************************
- * @fn      PC0_Check
+ * @fn      Bootmode_Check
  *
- * @brief   Check PC0 state
+ * @brief   Check state of bootmode pin GPIOC.0
  *
  * @return  1 - IAP
  *          0 - APP
  */
-u8 PC0_Check(void)
+u8 Bootmode_Check(void)
 {
-    u8 i;
-    GPIO_Cfg_init();
-
-    if((GPIOC->INDR & GPIO_Pin_0) != (uint32_t)Bit_RESET)
-    {
-                i = (uint8_t)Bit_SET;
-    }
-    else
-    {
-                i = (uint8_t)Bit_RESET;
-    }
-
-    if (i == 0) {
-    Delay_Ms(100);
-   if (i == 0)
-   {
-         return 0;
-   }
-    }
-
-    return 1;
+    return (GPIOC->INDR & GPIO_Pin_0);
 }
 
-
 /*********************************************************************
- * @fn      UART3_SendMultiyData
+ * @fn      UART1_SendData
  *
- * @brief   Deal device Endpoint 3 OUT.
- *
- * @param   l: Data length.
- *
- * @return  none
- */
-void UART1_SendMultiyData(u8* pbuf, u8 num)
-{
-    u8 i = 0;
-
-    while(i<num)
-    {
-        while(USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);
-        USART_SendData(USART1, pbuf[i]);
-        i++;
-    }
-}
-/*********************************************************************
- * @fn      UART1_SendMultiyData
- *
- * @brief   USART3 send data
+ * @brief   USART1 send 1B data
  *
  * @param   pbuf - Packet to be sent
  *          num - Number of data sent
@@ -228,13 +187,13 @@ void UART1_SendData(u8 data)
 }
 
 /*********************************************************************
- * @fn      Uart1_Rx
+ * @fn      UART1_ReceiveData
  *
- * @brief   Uart3 receive date
+ * @brief   Uart1 receive 1B data
  *
  * @return  none
  */
-u8 Uart1_Rx(void)
+u8 UART1_ReceiveData(void)
 {
     while( USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == RESET);
     return USART_ReceiveData( USART1);
@@ -252,29 +211,29 @@ void UART_Rx_Deal(void)
     u8 i, s;
     u8 Data_add = 0;
 
-    if (Uart1_Rx() == Uart_Sync_Head1)
+    if (UART1_ReceiveData() == Uart_Sync_Head1)
     {
-        if (Uart1_Rx() == Uart_Sync_Head2)
+        if (UART1_ReceiveData() == Uart_Sync_Head2)
         {
-            isp_cmd_t->Cmd = Uart1_Rx();
+            isp_cmd_t->Cmd = UART1_ReceiveData();
             Data_add += isp_cmd_t->Cmd;
-            isp_cmd_t->Len = Uart1_Rx();
+            isp_cmd_t->Len = UART1_ReceiveData();
             Data_add += isp_cmd_t->Len;
-            isp_cmd_t->Rev[0] = Uart1_Rx();
+            isp_cmd_t->Rev[0] = UART1_ReceiveData();
             Data_add += isp_cmd_t->Rev[0];
-            isp_cmd_t->Rev[1] = Uart1_Rx();
+            isp_cmd_t->Rev[1] = UART1_ReceiveData();
             Data_add += isp_cmd_t->Rev[1];
 
             if ((isp_cmd_t->Cmd == CMD_IAP_PROM)
                     || (isp_cmd_t->Cmd == CMD_IAP_VERIFY))
             {
                 for (i = 0; i < isp_cmd_t->Len; i++) {
-                    isp_cmd_t->data[i] = Uart1_Rx();
+                    isp_cmd_t->data[i] = UART1_ReceiveData();
                     Data_add += isp_cmd_t->data[i];
                 }
             }
 
-            if (Uart1_Rx() == Data_add)
+            if (UART1_ReceiveData() == Data_add)
             {
 
                 s = RecData_Deal();

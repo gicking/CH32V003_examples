@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "CH32V003_APP"
+		},
+		{
+			"path": "CH32V003_IAP"
+		}
+	],
+	"settings": {}
+}
