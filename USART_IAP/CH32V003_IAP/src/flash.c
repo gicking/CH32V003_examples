@@ -27,10 +27,9 @@ void CH32_IAP_Program(u32 adr, u32* buf)
     adr &= 0xFFFFFFC0;
     FLASH_BufReset();
     for(int j=0;j<16;j++)
-       {
-           FLASH_BufLoad(adr+4*j, buf[j]);
-
-       }
+    {
+        FLASH_BufLoad(adr+4*j, buf[j]);
+    }
     FLASH_ProgramPage_Fast(adr);
 }
 

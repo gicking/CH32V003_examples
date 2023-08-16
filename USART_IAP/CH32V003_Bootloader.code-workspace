@@ -7,5 +7,9 @@
 			"path": "CH32V003_IAP"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.associations": {
+			"iap.h": "c"
+		}
+	}
 }

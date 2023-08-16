@@ -9,35 +9,22 @@
 * Attention: This software (modified or not) and binary are used for 
 * microcontroller manufactured by Nanjing Qinheng Microelectronics.
 *******************************************************************************/
+
 /*
  *@Note
-IAP upgrade routine:
-Support serial port for FLASH burning
-
-1. Use the IAP download tool to realize the download PA0 floating (default pull-up input)
-2. After downloading the APP, connect PC0 to ground (low level input), and press the
-reset button to run the APP program.
-3. use WCH-LinkUtility.exe or https://github.com/ch32-rs/wlink to download to BOOT(addr=0x1FFFF000)
-
+ Support flash upload via serial interface, and demonstrates how to jump from bootloader mode (=IAP) to user mode (=APP):
+   - Upload IAP via debug interface to System Flash (addr=0x1FFFF000) using WCH-LinkUtility (GUI, Win) or https://github.com/ch32-rs/wlink (cmd, Cross-OS) 
+   - Switching between IAP and APP mode is by a special key in flash 
+   - Connect PD0 to a LED. IAP mode is indicated by a fast LED blink, and APP by a slow LED blink
+   - To switch from IAP to APP, remove external pull-down on pin PC0 (configured as input pull-up)
+   - To switch from APP (=application) to IAP (=bootloader), manually set pin PC0=LOW (configured as input pull-up)
+   - Due to unknown reasons, sometimes a power-on reset is required after a mode switch
+   - In IAP mode, a new APP software can be uploaded via USART1 using WCHISPTool (GUI, Win) or WCHISPTool_CMD (cmd, Cross-OS)
 */
 
 #include "debug.h"
 #include "string.h"
 #include "iap.h"
-
-/*********************************************************************
- * @fn      IAP_2_APP
- *
- * @brief   IAP_2_APP program.
- *
- * @return  none
- */
-void IAP_2_APP(void)
-{
-    RCC_ClearFlag();
-    SystemReset_StartMode(Start_Mode_USER);
-    NVIC_SystemReset();
-}
 
 /*********************************************************************
  * @fn      main
@@ -48,37 +35,55 @@ void IAP_2_APP(void)
  */
 int main(void)
 {
-    u32 i=0;
+    volatile uint32_t i=0;
     
-    // Enable GPIOD, USART1 and GPIOC clock
-    RCC->APB2PCENR |= RCC_APB2Periph_GPIOD| RCC_APB2Periph_USART1|RCC_APB2Periph_GPIOC;
+    // Enable peripheral clocks for USART1, GPIOC and GPIOD
+    RCC->APB2PCENR |= RCC_APB2Periph_USART1 | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD;
     
-    // init required peripherals
-    USART1_CFG(460800);    
-    GPIO_CFG();
+    // init USART1 to 460800Baud
+    GPIOD->CFGLR  &= ~0x0FF00000;       // set PD5&6 default pin settings
+    GPIOD->CFGLR  |= 0x08B00000;        // set PD6=Rx, PD5=Tx
+    GPIOD->BCR     = GPIO_Pin_6;        // activate PD6 pull-up
+    //USART1->CTLR2 |= USART_StopBits_1;                // 1 stop bit is reset setting 
+    USART1->CTLR1  = 0x000C;            // set USART mode, length, parity, GPIO pin
+    //USART1->CTLR3 |= USART_HardwareFlowControl_None;  // no flow control is reset setting
+    USART1->BRR    = 0x34;              // set 460800 baudrate
+    USART1->CTLR1 |= 0x2000;            // enables USART
+
+    // configure GPIOC.0 as input with pull-up
+    GPIOC->CFGLR &= ~0x0F;              // set PC0 default pin settings
+    GPIOC->CFGLR |=  0x08;              // input with PU/PD
+    GPIOC->BSHR   =  0x01;              // activate pull-up
+
+    // configure GPIOD.0 (connected to LED) as output, push-pull
+    GPIOD->CFGLR &= ~0x0F;              // set PD0 default pin settings               
+    GPIOD->CFGLR |=  0x02;              // set output, push-pull
 
 
-    // check bootmode pin only after reset
-    if(Bootmode_Check() == 0)
-    {
-        IAP_2_APP();
-        while(1);
-    }
-
-    // enter IAP bootloader
+    // main loop
     while(1)
     {
-        // indicate IAP mode via fast blinking PD0 (connect to LED)
-        if (i++ == 1000000L)
+        // indicate IAP mode by fast LED blink (connect PD0 to LED)
+        if (i++ == 100000L)
         {
-            i=0;
-            GPIOD->OUTDR^=0x1;
+            i = 0;
+            GPIOD->OUTDR ^= GPIO_Pin_0;
         }
 
-        // handle UART commands
-        if(USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == RESET)
+        // return to APP mode if bootmode pin is high (=default)
+        if (GPIOC->INDR & GPIO_Pin_0)
+        {
+            //RCC_ClearFlag();                            // clear reset cause (not required)
+            SystemReset_StartMode(Start_Mode_USER);
+            NVIC_SystemReset();
+        }
+
+        // execute UART commands
+        if(USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == SET)
         {
             UART_Rx_Deal();
         }
-    }
-}
+
+    } // main loop
+
+} // main()

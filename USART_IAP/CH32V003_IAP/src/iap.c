@@ -28,29 +28,32 @@ u8 EP2_Rx_Buffer[USBD_DATA_SIZE];
 #define  isp_cmd_t   ((isp_cmd  *)EP2_Rx_Buffer)
 
 /*********************************************************************
- * @fn      USART1_CFG
+ * @fn      UART1_SendData
  *
- * @brief   GPIOD-USART1 init
+ * @brief   USART1 send 1B data
  *
- * @return
+ * @param   pbuf - Packet to be sent
+ *          num - Number of data sent
+ *
+ * @return  none
  */
-
-
-void USART1_CFG(u32 baudrate)
+void UART1_SendData(u8 data)
 {
+    while(!(USART1->STATR & USART_FLAG_TC));
+    USART1->DATAR = (uint16_t) data;
+}
 
-    GPIOD->CFGLR=0X48B44444;/* Set GPIOD Mode,Speed (PD6=Rx, PD5=Tx)*/
-    GPIOD->BCR = (((uint32_t)0x01) << 6);
-    USART1->CTLR2 |= USART_StopBits_1;
-
-    USART1->CTLR1=0X200C; /* Set USART mode,WordLength,Parity,GPIO_Pin */
-
-    USART1->CTLR3 |= USART_HardwareFlowControl_None;
-
-    USART1->BRR = 0X34;  /* Set 460800 baudrate */
-
-    USART1->CTLR1 |= ((uint16_t)0x2000); /* Enables the specified USART peripheral */
-
+/*********************************************************************
+ * @fn      UART1_ReceiveData
+ *
+ * @brief   Uart1 receive 1B data
+ *
+ * @return  none
+ */
+u8 UART1_ReceiveData(void)
+{
+    while(!(USART1->STATR & USART_FLAG_RXNE));
+    return (uint8_t) USART1->DATAR;
 }
 
 /*********************************************************************
@@ -64,11 +67,12 @@ void USART1_CFG(u32 baudrate)
  */
 u8 RecData_Deal(void)
 {
-    u8 i, s, Lenth;
+    u8 i, s, Length;
 
-    Lenth = isp_cmd_t->Len;
+    Length = isp_cmd_t->Len;
 
     switch ( isp_cmd_t->Cmd) {
+
         case CMD_IAP_ERASE:
             FLASH_Unlock_Fast();
             FLASH_EraseAllPages();
@@ -76,10 +80,10 @@ u8 RecData_Deal(void)
             break;
 
         case CMD_IAP_PROM:
-            for (i = 0; i < Lenth; i++) {
+            for (i = 0; i < Length; i++) {
                 Fast_Program_Buf[CodeLen + i] = isp_cmd_t->data[i];
             }
-            CodeLen += Lenth;
+            CodeLen += Length;
             if (CodeLen >= 64) {
 
 
@@ -104,20 +108,19 @@ u8 RecData_Deal(void)
                     Fast_Program_Buf[CodeLen + i] = 0xFF;
                 }
 
-
                 CH32_IAP_Program(Program_addr, (u32*) Fast_Program_Buf);
                 CodeLen = 0;
             }
 
             s = ERR_SCUESS;
-            for (i = 0; i < Lenth; i++) {
+            for (i = 0; i < Length; i++) {
                 if (isp_cmd_t->data[i] != *(u8*) (Verity_addr + i)) {
                     s = ERR_ERROR;
                     break;
                 }
             }
 
-            Verity_addr += Lenth;
+            Verity_addr += Length;
 
             break;
 
@@ -136,67 +139,6 @@ u8 RecData_Deal(void)
     }
 
     return s;
-}
-
-/*********************************************************************
- * @fn      GPIO_CFG
- *
- * @brief   init bootmode pin GPIOC.0
- *
- * @return  none
- */
-void GPIO_CFG(void)
-{
-    // set GPIOC.0 as input with pull-up
-    GPIOC->CFGLR &= ~0xF;
-    GPIOC->CFGLR |=  0x8;
-
-    // set GPIOD.0 as output, push-pull (connect to LED)
-    GPIOD->CFGLR &= ~0XF;
-    GPIOD->CFGLR |=  0X2;
-}
-
-/*********************************************************************
- * @fn      Bootmode_Check
- *
- * @brief   Check state of bootmode pin GPIOC.0
- *
- * @return  1 - IAP
- *          0 - APP
- */
-u8 Bootmode_Check(void)
-{
-    return (GPIOC->INDR & GPIO_Pin_0);
-}
-
-/*********************************************************************
- * @fn      UART1_SendData
- *
- * @brief   USART1 send 1B data
- *
- * @param   pbuf - Packet to be sent
- *          num - Number of data sent
- *
- * @return  none
- */
-void UART1_SendData(u8 data)
-{
-    while(USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);
-    USART_SendData(USART1, data);
-
-}
-
-/*********************************************************************
- * @fn      UART1_ReceiveData
- *
- * @brief   Uart1 receive 1B data
- *
- * @return  none
- */
-u8 UART1_ReceiveData(void)
-{
-    while( USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == RESET);
-    return USART_ReceiveData( USART1);
 }
 
 /*********************************************************************
@@ -224,8 +166,7 @@ void UART_Rx_Deal(void)
             isp_cmd_t->Rev[1] = UART1_ReceiveData();
             Data_add += isp_cmd_t->Rev[1];
 
-            if ((isp_cmd_t->Cmd == CMD_IAP_PROM)
-                    || (isp_cmd_t->Cmd == CMD_IAP_VERIFY))
+            if ((isp_cmd_t->Cmd == CMD_IAP_PROM) || (isp_cmd_t->Cmd == CMD_IAP_VERIFY))
             {
                 for (i = 0; i < isp_cmd_t->Len; i++) {
                     isp_cmd_t->data[i] = UART1_ReceiveData();
